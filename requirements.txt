@@ -1,0 +1,17 @@
+djangorestframework
+django-cors-headers
+pillow
+djoser
+pytils
+
+celery
+redis
+
+python-pdf
+django-cleanup
+django-ckeditor
+monthdelta
+pytils
+
+
+
