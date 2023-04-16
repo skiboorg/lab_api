@@ -39,6 +39,7 @@ class AddSintez(APIView):
         json_data = json.loads(raw_data)
         print(json_data)
         serializer = SintezSerializer(data=json_data)
+        result = {"success":True}
         if serializer.is_valid():
             print('good')
             sintez = serializer.save()
@@ -56,7 +57,8 @@ class AddSintez(APIView):
                 card.sintez = sintez
                 card.save()
             else:
-                print(start_card_serializer.errors)
+                result = {"success": False, "message": start_card_serializer.errors}
+                return Response(result, status=200)
             last_index = 0
             for index,card in enumerate(json_data['cards']):
                 card_serializer = SintezCardSerializer(data=card)
@@ -67,7 +69,9 @@ class AddSintez(APIView):
                     card.save()
                     last_index = index + 2
                 else:
-                    print('card_serializer', card_serializer.errors)
+                    result = {"success": False, "message":card_serializer.errors}
+                    return Response(result, status=200)
+
             final_card_serializer = SintezCardSerializer(data=json_data['final_card'])
             if final_card_serializer.is_valid():
                 card = final_card_serializer.save()
@@ -75,28 +79,29 @@ class AddSintez(APIView):
                 card.order_num = last_index + 1
                 card.save()
             else:
-                print('final_card_serializer',final_card_serializer.errors)
+                result = {"success": False, "message": final_card_serializer.errors}
+                return Response(result, status=200)
+            for index, step in enumerate(json_data['steps']):
+                try:
+                    SintezStep.objects.create(sintez=sintez, text=step['text'],image=request.FILES.getlist('step_images')[index])
+                except:
+                    SintezStep.objects.create(sintez=sintez,text=step['text'])
 
-            # for index, step in enumerate(json_data['steps']):
-            #     try:
-            #         SintezStep.objects.create(sintez=sintez, text=step['text'],image=request.FILES.getlist('step_images')[index])
-            #     except:
-            #         SintezStep.objects.create(sintez=sintez,text=step['text'])
-            #
-            # for index, img in enumerate(json_data['images']):
-            #     try:
-            #         SintezImage.objects.create(sintez=sintez, text=img['text'],image=request.FILES.getlist('images_images')[index])
-            #     except:
-            #         break
-            #
-            # for index, file in enumerate(json_data['files']):
-            #     try:
-            #         SintezFile.objects.create(sintez=sintez, text=file['text'],file=request.FILES.getlist('files_images')[index])
-            #     except:
-            #         break
+            for index, img in enumerate(json_data['images']):
+                try:
+                    SintezImage.objects.create(sintez=sintez, text=img['text'],image=request.FILES.getlist('images_images')[index])
+                except:
+                    break
+
+            for index, file in enumerate(json_data['files']):
+                try:
+                    SintezFile.objects.create(sintez=sintez, text=file['text'],file=request.FILES.getlist('files_images')[index])
+                except:
+                    break
 
         else:
-            print(serializer.errors)
+            result = {"success": False, "message": serializer.errors}
+            return Response(result, status=200)
         # print(json_data)
         # print(request.FILES.getlist('step_images'))
         # print(request.FILES.getlist('images_images'))
@@ -104,7 +109,7 @@ class AddSintez(APIView):
         # print(json_data['steps'])
         # for index, step in enumerate(json_data['steps']):
 
-        return Response(status=200)
+        return Response(result, status=200)
 class AddProject(APIView):
     def post(self,request):
         from user.models import User
